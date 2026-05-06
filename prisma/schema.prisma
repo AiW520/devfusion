@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  learningPlans LearningPlan[]
+  progress      CourseProgress[]
+  notes         Note[]
+  conversations AssistantConversation[]
+}
+
+model LearningPlan {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackSlug   String?
+  vectorSlug  String?
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@unique([userId, trackSlug])
+  @@unique([userId, vectorSlug])
+}
+
+model CourseUnit {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  title       String
+  description String?
+  moduleType  String          // FOUNDATION, PROJECT, INTERVIEW
+  mdxContent  String
+  difficulty  Int             @default(1)
+  orderIndex  Int             @default(0)
+  phases      String?         // JSON for project phases (PROJECT type)
+  questions   String?         // JSON for interview Q&A (INTERVIEW type)
+  trackRefs   TrackUnitRef[]
+  vectorRefs  VectorUnitRef[]
+  progress    CourseProgress[]
+  notes       Note[]
+}
+
+model Track {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  name          String
+  description   String
+  category      String         @default("web") // web, mobile, ai, data
+  difficulty    Int            @default(1)
+  durationWeeks Int            @default(8)
+  techStack     String         // JSON array of tech stack items
+  color         String         @default("#3B82F6")
+  icon          String         @default("orbit")
+  externalProjects String?   // JSON: [{"name":"项目名","url":"https://..."}]
+  units            TrackUnitRef[]
+}
+
+model TrackUnitRef {
+  id      String     @id @default(cuid())
+  trackId String
+  track   Track      @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  unitId  String
+  unit    CourseUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  order   Int        @default(0)
+
+  @@unique([trackId, unitId])
+}
+
+model LanguageVector {
+  id            String           @id @default(cuid())
+  lang          String
+  slug          String           @unique
+  name          String
+  description   String
+  difficulty    Int              @default(1)
+  durationWeeks Int              @default(6)
+  techStack     String           // JSON array
+  color         String           @default("#8B5CF6")
+  externalProjects String?   // JSON: [{"name":"项目名","url":"https://..."}]
+  units            VectorUnitRef[]
+}
+
+model VectorUnitRef {
+  id       String         @id @default(cuid())
+  vectorId String
+  vector   LanguageVector @relation(fields: [vectorId], references: [id], onDelete: Cascade)
+  unitId   String
+  unit     CourseUnit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  order    Int            @default(0)
+
+  @@unique([vectorId, unitId])
+}
+
+model CourseProgress {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId    String
+  unit      CourseUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  completed Boolean    @default(false)
+  score     Int?
+  weaknesses Weakness[]
+
+  @@unique([userId, unitId])
+}
+
+model Weakness {
+  id         String         @id @default(cuid())
+  progressId String
+  progress   CourseProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+  concept    String
+  severity   Int            @default(1)
+}
+
+model Note {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId    String?
+  unit      CourseUnit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  content   String
+  createdAt DateTime   @default(now())
+}
+
+model AssistantConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  String   // JSON array of messages
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

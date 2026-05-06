@@ -1,0 +1,7 @@
+{
+  "envId": "language-hub-d4ga3jbeic38493a9",
+  "version": "3.0",
+  "cloudrun": {
+    "name": "devfusion-hub"
+  }
+}
