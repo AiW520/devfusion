@@ -1,4 +1,4 @@
-import { getTrackBySlug, getCourseUnit } from "@/lib/data";
+import { getTrackBySlug, getCourseUnit, getUnitsByTrack } from "@/lib/data";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -44,13 +44,13 @@ export default async function OrbitUnitDetailPage({
   if (!unit || unit.moduleType !== dbModuleType) notFound();
 
   // Get all units in this module for navigation
-  const moduleUnits = track.units
-    .filter((tu) => tu.unit.moduleType === dbModuleType)
-    .sort((a, b) => a.order - b.order);
+  const allUnits = await getUnitsByTrack(track.id);
+  const moduleUnits = allUnits
+    .filter((u) => u.moduleType === dbModuleType);
 
-  const currentIndex = moduleUnits.findIndex((tu) => tu.unit.slug === unitSlug);
-  const prevUnit = currentIndex > 0 ? moduleUnits[currentIndex - 1].unit : null;
-  const nextUnit = currentIndex < moduleUnits.length - 1 ? moduleUnits[currentIndex + 1].unit : null;
+  const currentIndex = moduleUnits.findIndex((u) => u.slug === unitSlug);
+  const prevUnit = currentIndex > 0 ? moduleUnits[currentIndex - 1] : null;
+  const nextUnit = currentIndex < moduleUnits.length - 1 ? moduleUnits[currentIndex + 1] : null;
 
   const meta = moduleMetaMap[dbModuleType];
   const ModuleIcon = meta.icon;
@@ -130,12 +130,12 @@ export default async function OrbitUnitDetailPage({
                 </p>
               </div>
               <div className="max-h-[60vh] overflow-y-auto">
-                {moduleUnits.map((tu, i) => {
-                  const isActive = tu.unit.slug === unitSlug;
+                {moduleUnits.map((unitItem, i) => {
+                  const isActive = unitItem.slug === unitSlug;
                   return (
                     <Link
-                      key={tu.id}
-                      href={`/orbit/${trackSlug}/module/${moduleType}/${tu.unit.slug}`}
+                      key={unitItem.id}
+                      href={`/orbit/${trackSlug}/module/${moduleType}/${unitItem.slug}`}
                       className={`flex items-start gap-3 px-4 py-3 border-b border-[#1E293B] transition-colors group ${
                         isActive
                           ? "bg-[#0B0E14] border-l-2 border-l-[#3B82F6]"
@@ -165,7 +165,7 @@ export default async function OrbitUnitDetailPage({
                               : "text-slate-400 group-hover:text-slate-300"
                           }`}
                         >
-                          {tu.unit.title}
+                          {unitItem.title}
                         </p>
                       </div>
                     </Link>

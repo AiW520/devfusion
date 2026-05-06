@@ -62,7 +62,7 @@ export default async function LanguageHubPage() {
   const allLanguages = await Promise.all(
     languages.map(async (lang) => ({
       lang,
-      stats: await getLanguageStats(lang),
+      stats: await getLanguageStats(lang.slug),
     }))
   );
 
@@ -85,19 +85,19 @@ export default async function LanguageHubPage() {
       <section className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {languages.map((lang) => {
-            const meta = languageMeta[lang] || {
-              name: lang,
+            const meta = languageMeta[lang.slug] || {
+              name: lang.name,
               icon: SiPython,
               color: "#64748B",
               desc: "探索技术向量",
             };
-            const langStats = allLanguages.find((l) => l.lang === lang);
+            const langStats = allLanguages.find((l) => l.lang.slug === lang.slug);
             const Icon = meta.icon;
 
             return (
               <Link
-                key={lang}
-                href={`/language-hub/${lang}`}
+                key={lang.slug}
+                href={`/language-hub/${lang.slug}`}
                 className="group rounded-2xl border border-[#1E293B] bg-[#131A2B] p-6 hover:border-[#8B5CF6] transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="flex items-center gap-4 mb-4">
@@ -136,7 +136,7 @@ export default async function LanguageHubPage() {
 
           {/* Coming soon cards */}
           {["go", "rust", "kotlin"]
-            .filter((l) => !languages.includes(l))
+            .filter((l) => !languages.some((lang) => lang.slug === l))
             .map((lang) => {
               const meta = languageMeta[lang];
               const Icon = meta.icon;

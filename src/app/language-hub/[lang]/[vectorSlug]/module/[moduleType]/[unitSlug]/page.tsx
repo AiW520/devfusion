@@ -1,4 +1,4 @@
-import { getVectorBySlug, getCourseUnit } from "@/lib/data";
+import { getVectorBySlug, getCourseUnit, getUnitsByVector } from "@/lib/data";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -42,13 +42,12 @@ export default async function VectorUnitDetailPage({
   const unit = await getCourseUnit(unitSlug);
   if (!unit || unit.moduleType !== dbModuleType) notFound();
 
-  const moduleUnits = (vector as any).units
-    ?.filter((vu: any) => vu.unit.moduleType === dbModuleType)
-    .sort((a: any, b: any) => a.order - b.order) || [];
+  const allUnits = await getUnitsByVector(vector.id);
+  const moduleUnits = allUnits.filter((u) => u.moduleType === dbModuleType);
 
-  const currentIndex = moduleUnits.findIndex((vu: any) => vu.unit.slug === unitSlug);
-  const prevUnit = currentIndex > 0 ? moduleUnits[currentIndex - 1].unit : null;
-  const nextUnit = currentIndex < moduleUnits.length - 1 ? moduleUnits[currentIndex + 1].unit : null;
+  const currentIndex = moduleUnits.findIndex((u) => u.slug === unitSlug);
+  const prevUnit = currentIndex > 0 ? moduleUnits[currentIndex - 1] : null;
+  const nextUnit = currentIndex < moduleUnits.length - 1 ? moduleUnits[currentIndex + 1] : null;
 
   const meta = moduleMetaMap[dbModuleType];
   const ModuleIcon = meta.icon;

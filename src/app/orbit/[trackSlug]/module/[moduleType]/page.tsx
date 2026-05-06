@@ -1,4 +1,4 @@
-import { getTrackBySlug } from "@/lib/data";
+import { getTrackBySlug, getUnitsByTrack } from "@/lib/data";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -41,9 +41,8 @@ export default async function OrbitModulePage({
   const dbModuleType = moduleTypeMap[moduleType];
   if (!dbModuleType) notFound();
 
-  const moduleUnits = track.units.filter(
-    (tu) => tu.unit.moduleType === dbModuleType
-  );
+  const allUnits = await getUnitsByTrack(track.id);
+  const moduleUnits = allUnits.filter((u) => u.moduleType === dbModuleType);
 
   const moduleMeta = moduleLabelMap[moduleType];
   const ModuleIcon = moduleMeta.icon;
@@ -92,10 +91,10 @@ export default async function OrbitModulePage({
               </div>
               <ScrollArea className="h-[60vh]">
                 <div className="p-2">
-                  {moduleUnits.map((tu, i) => (
+                  {moduleUnits.map((unit, i) => (
                     <a
-                      key={tu.id}
-                      href={`#unit-${tu.unit.slug}`}
+                      key={unit.id}
+                      href={`#unit-${unit.slug}`}
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                         i === 0
                           ? "bg-[#0B0E14] text-[#3B82F6] border border-[#1E293B]"
@@ -103,7 +102,7 @@ export default async function OrbitModulePage({
                       }`}
                     >
                       <span className="text-xs opacity-60">{i + 1}</span>
-                      <span className="truncate">{tu.unit.title}</span>
+                      <span className="truncate">{unit.title}</span>
                     </a>
                   ))}
                 </div>
@@ -113,10 +112,10 @@ export default async function OrbitModulePage({
 
           {/* Main content */}
           <div className="lg:col-span-3 space-y-8">
-            {moduleUnits.map((tu, i) => (
+            {moduleUnits.map((unit, i) => (
               <Card
-                key={tu.id}
-                id={`unit-${tu.unit.slug}`}
+                key={unit.id}
+                id={`unit-${unit.slug}`}
                 className="border-[#1E293B] bg-[#131A2B] scroll-mt-24"
               >
                 <CardContent className="p-6">
@@ -132,10 +131,10 @@ export default async function OrbitModulePage({
                     </span>
                     <div>
                       <h2 className="text-xl font-bold text-slate-100">
-                        {tu.unit.title}
+                        {unit.title}
                       </h2>
                       <p className="text-sm text-slate-500">
-                        {tu.unit.description}
+                        {unit.description}
                       </p>
                     </div>
                   </div>
@@ -144,8 +143,8 @@ export default async function OrbitModulePage({
 
                   {/* Content preview */}
                   <div className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap line-clamp-[12] font-mono bg-[#0B0E14] rounded-lg p-4 border border-[#1E293B]">
-                    {tu.unit.mdxContent.substring(0, 500)}
-                    {tu.unit.mdxContent.length > 500 && "..."}
+                    {unit.mdxContent.substring(0, 500)}
+                    {unit.mdxContent.length > 500 && "..."}
                   </div>
 
                   {/* Module-specific actions */}
@@ -169,7 +168,7 @@ export default async function OrbitModulePage({
                       </div>
                     )}
                     <Link
-                        href={`/orbit/${trackSlug}/module/${moduleType}/${tu.unit.slug}`}
+                        href={`/orbit/${trackSlug}/module/${moduleType}/${unit.slug}`}
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90 transition-all"
                         style={{ backgroundColor: moduleMeta.color }}
                       >

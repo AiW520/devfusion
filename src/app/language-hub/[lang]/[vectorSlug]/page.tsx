@@ -1,4 +1,4 @@
-import { getVectorBySlug, getLanguageVectors } from "@/lib/data";
+import { getVectorBySlug, getLanguageVectors, getUnitsByVector } from "@/lib/data";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -37,22 +37,13 @@ export default async function VectorDetailPage({
 
   if (!vector) notFound();
 
-  let techStack: string[];
-  try {
-    const parsed = JSON.parse(vector.techStack);
-    techStack = Array.isArray(parsed) ? parsed.map((t: any) => typeof t === 'string' ? t : t.name || JSON.stringify(t)) : [];
-  } catch {
-    techStack = [];
-  }
-  const foundationUnits = (vector as any).units?.filter(
-    (vu: any) => vu.unit.moduleType === "FOUNDATION"
-  ) || [];
-  const projectUnits = (vector as any).units?.filter(
-    (vu: any) => vu.unit.moduleType === "PROJECT"
-  ) || [];
-  const interviewUnits = (vector as any).units?.filter(
-    (vu: any) => vu.unit.moduleType === "INTERVIEW"
-  ) || [];
+  const techStack = safeJsonParse<string[]>(vector.techStack, []).map((t: any) =>
+    typeof t === 'string' ? t : t.name || JSON.stringify(t)
+  );
+  const units = await getUnitsByVector(vector.id);
+  const foundationUnits = units.filter((u) => u.moduleType === "FOUNDATION");
+  const projectUnits = units.filter((u) => u.moduleType === "PROJECT");
+  const interviewUnits = units.filter((u) => u.moduleType === "INTERVIEW");
 
   return (
     <div className="min-h-screen">
@@ -167,19 +158,19 @@ export default async function VectorDetailPage({
                         暂无课程内容，敬请期待
                       </div>
                     ) : (
-                      units.map((vu: any) => (
+                      units.map((unit) => (
                         <Link
-                          key={vu.id}
-                          href={`/language-hub/${lang}/${vectorSlug}/module/${vu.unit.moduleType.toLowerCase()}/${vu.unit.slug}`}
+                          key={unit.id}
+                          href={`/language-hub/${lang}/${vectorSlug}/module/${unit.moduleType.toLowerCase()}/${unit.slug}`}
                           className="block rounded-xl border border-[#1E293B] bg-[#131A2B] p-5 hover:border-[#8B5CF6] transition-all group"
                         >
                           <div className="flex items-start justify-between">
                             <div>
                               <h4 className="text-base font-semibold text-slate-200">
-                                {vu.unit.title}
+                                {unit.title}
                               </h4>
                               <p className="text-sm text-slate-500 mt-1">
-                                {vu.unit.description}
+                                {unit.description}
                               </p>
                             </div>
                             <ArrowRight className="h-5 w-5 text-slate-600 group-hover:text-[#8B5CF6] group-hover:translate-x-1 transition-all" />

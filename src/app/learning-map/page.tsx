@@ -1,4 +1,4 @@
-import { getTracks, getLanguages } from "@/lib/data";
+import { getTracks, getLanguages, getUnitsByTrack } from "@/lib/data";
 import Link from "next/link";
 import { Orbit, BookOpen, Sparkles } from "lucide-react";
 
@@ -10,6 +10,13 @@ export const metadata = {
 export default async function LearningMapPage() {
   const tracks = await getTracks();
   const languages = await getLanguages();
+
+  const tracksWithUnits = await Promise.all(
+    tracks.map(async (track) => ({
+      ...track,
+      units: await getUnitsByTrack(track.id),
+    }))
+  );
 
   return (
     <div className="min-h-screen">
@@ -34,7 +41,7 @@ export default async function LearningMapPage() {
               星轨探索路径
             </h2>
             <div className="space-y-4">
-              {tracks.map((track, i) => (
+              {tracksWithUnits.map((track, i) => (
                 <Link
                   key={track.id}
                   href={`/orbit/${track.slug}`}
@@ -74,20 +81,20 @@ export default async function LearningMapPage() {
             <div className="space-y-4">
               {languages.map((lang, i) => (
                 <Link
-                  key={lang}
-                  href={`/language-hub/${lang}`}
+                  key={lang.slug}
+                  href={`/language-hub/${lang.slug}`}
                   className="block rounded-xl border border-[#1E293B] bg-[#131A2B] p-5 hover:border-[#8B5CF6] transition-all group"
                 >
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-full bg-[#0B0E14] border border-[#1E293B] flex items-center justify-center text-lg font-bold text-[#8B5CF6]">
-                      {lang.charAt(0).toUpperCase()}
+                      {lang.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-slate-200 group-hover:text-white">
-                        {lang.charAt(0).toUpperCase() + lang.slice(1)}+
+                        {lang.name}+
                       </h3>
                       <p className="text-sm text-slate-500 mt-1">
-                        探索 {lang} 生态的技术向量组合
+                        探索 {lang.name} 生态的技术向量组合
                       </p>
                     </div>
                   </div>

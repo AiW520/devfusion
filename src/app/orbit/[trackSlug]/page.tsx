@@ -1,4 +1,4 @@
-import { getTrackBySlug, getTracks } from "@/lib/data";
+import { getTrackBySlug, getTracks, getUnitsByTrack } from "@/lib/data";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -47,15 +47,10 @@ export default async function TrackDetailPage({
   if (!track) notFound();
 
   const techStack = safeJsonParse(track.techStack, []);
-  const foundationUnits = track.units.filter(
-    (tu) => tu.unit.moduleType === "FOUNDATION"
-  );
-  const projectUnits = track.units.filter(
-    (tu) => tu.unit.moduleType === "PROJECT"
-  );
-  const interviewUnits = track.units.filter(
-    (tu) => tu.unit.moduleType === "INTERVIEW"
-  );
+  const units = await getUnitsByTrack(track.id);
+  const foundationUnits = units.filter((u) => u.moduleType === "FOUNDATION");
+  const projectUnits = units.filter((u) => u.moduleType === "PROJECT");
+  const interviewUnits = units.filter((u) => u.moduleType === "INTERVIEW");
 
   return (
     <div className="min-h-screen">
@@ -159,10 +154,10 @@ export default async function TrackDetailPage({
               </TabsList>
 
               <TabsContent value="foundation" className="space-y-4">
-                {foundationUnits.map((tu) => (
+                {foundationUnits.map((unit) => (
                   <UnitCard
-                    key={tu.id}
-                    unit={tu.unit}
+                    key={unit.id}
+                    unit={unit}
                     trackSlug={track.slug}
                     color="#3B82F6"
                   />
@@ -170,10 +165,10 @@ export default async function TrackDetailPage({
               </TabsContent>
 
               <TabsContent value="project" className="space-y-4">
-                {projectUnits.map((tu) => (
+                {projectUnits.map((unit) => (
                   <UnitCard
-                    key={tu.id}
-                    unit={tu.unit}
+                    key={unit.id}
+                    unit={unit}
                     trackSlug={track.slug}
                     color="#8B5CF6"
                   />
@@ -206,10 +201,10 @@ export default async function TrackDetailPage({
               </TabsContent>
 
               <TabsContent value="interview" className="space-y-4">
-                {interviewUnits.map((tu) => (
+                {interviewUnits.map((unit) => (
                   <UnitCard
-                    key={tu.id}
-                    unit={tu.unit}
+                    key={unit.id}
+                    unit={unit}
                     trackSlug={track.slug}
                     color="#10B981"
                   />
